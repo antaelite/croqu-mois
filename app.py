@@ -9,6 +9,11 @@ st.set_page_config(page_title="Croqu'Mois", page_icon="🍏", layout="wide")
 # --- CHARTE GRAPHIQUE (CSS SUPPLÉMENTAIRE) ---
 st.markdown("""
     <style>
+    /* Fusion parfaite du logo avec le fond de l'application */
+    img {
+        mix-blend-mode: multiply;
+    }
+    
     /* Application de l'orange d'accentuation au survol des boutons */
     div.stButton > button {
         transition: all 0.3s ease;
