@@ -26,26 +26,38 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER (Logo, Nom, Slogan) ---
-# Utilisation de colonnes pour centrer parfaitement l'image
-col1, col2, col3 = st.columns([1, 1, 1])
-with col2:
-    st.image("assets/logo.jpeg", use_container_width=True)
+# --- GESTION DE LA BARRE LATÉRALE (Logo & API) ---
+with st.sidebar:# 1. Le logo tout en haut avec une taille réduite (ex: 150 pixels)
+    # Utilisation de colonnes pour centrer parfaitement l'image
+    col1, col2, col3 = st.columns([2, 3, 2])
+    with col2:
+        st.image("assets/logo.png", use_container_width=True)
 
-st.markdown("---")
+    st.markdown("---")
 
-# --- GESTION DE LA CLÉ API ---
-with st.sidebar:
+    # 2. La configuration en dessous
     st.header("⚙️ Configuration")
-    api_key = st.text_input("Entre ta clé API Gemini :", type="password")
+    api_key = st.text_input("Entre ta clé API Gemini :", type="password").strip()
+
     if api_key:
         genai.configure(api_key=api_key)
         st.success("Clé API validée !")
     else:
         st.warning("Veuillez entrer une clé API pour faire fonctionner l'IA.")
-        st.markdown("[Obtenir une clé API gratuite](https://aistudio.google.com/)")
+        # Bouton direct vers la page exacte de création de clé
+        st.link_button("🔑 Créer une clé API gratuite", "https://aistudio.google.com/app/apikey", use_container_width=True)
 
-    st.markdown("---")
+        # Tutoriel dépliant
+        with st.expander("ℹ️ Comment créer sa clé API ?"):
+            st.markdown("""
+            1. Clique sur le bouton ci-dessus pour ouvrir Google AI Studio.
+            2. Connecte-toi avec ton compte Google.
+            3. Clique sur le bouton bleu **Create API key**.
+            4. Sélectionne **Create API key in new project**.
+            5. Copie la longue chaîne de caractères générée et colle-la dans le champ au-dessus.
+            """)
+
+    st.write("") # Espace optionnel
     st.markdown("**Projet AAA - Advanced AI Algorithms**")
 
 # --- ONGLETS DE L'APPLICATION ---
@@ -86,38 +98,74 @@ with tab1:
             ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
         )
 
+    # Initialisation de la mémoire (HORS du bouton)
+    if "planning_genere" not in st.session_state:
+        st.session_state.planning_genere = None
+
     # Étape 4 & 5 : Génération
     if st.button("🚀 Générer mon planning et ma liste de courses", use_container_width=True):
         if not api_key:
             st.error("Veuillez d'abord configurer votre clé API dans la barre latérale.")
         else:
-            with st.spinner("L'IA CampusCook analyse tes contraintes et crée ton menu..."):
+            with st.spinner("L'IA Croqu'Mois analyse tes contraintes et crée ton menu..."):
                 try:
-                    # Construction du prompt
+                    # Construction du prompt corrigé avec les Emoji Cards
                     prompt = f"""
                     Tu es un assistant culinaire spécialisé pour les étudiants.
                     Voici le profil de l'étudiant pour cette semaine :
-                    - Budget pour la semaine : {budget_semaine} euros. Tu DOIS respecter ce budget.
-                    - Situations particulières : {', '.join(situations)} {autre_situation}.
-                    - Équipements disponibles : {', '.join(equipements)}. Ne propose AUCUNE recette nécessitant un équipement non listé (ex: pas de cuisson au four si 'Four' n'est pas coché).
-                    - Jours nécessitant un repas froid le midi (facile à transporter) : {', '.join(repas_exterieur)}.
-
+    - Budget : {budget_semaine} euros. Tu DOIS le respecter.
+    - Situations : {', '.join(situations)} {autre_situation}.
+    - Équipements : {', '.join(equipements)}. Ne propose AUCUNE recette nécessitant un équipement non listé.
+    - Jours repas froids : {', '.join(repas_exterieur)}.
+                    
                     Génère :
-                    1. Un planning de repas pour 7 jours (midi et soir). Sois varié mais réaliste financièrement. Précise le temps de préparation.
-                    2. Une liste de courses mutualisée (optimisée pour éviter le gaspillage) avec l'estimation du prix par ingrédient pour montrer que ça rentre dans les {budget_semaine} euros.
-
-                    Structure ta réponse en Markdown de façon claire (Titres, puces).
+    1. Un planning de repas pour 7 jours (midi et soir). Pour CHAQUE repas, utilise STRICTEMENT ce code HTML pour créer une carte de repas avec une icône emoji générée sur mesure :
+    
+                    <div style="display: flex; align-items: center; margin-bottom: 20px; background-color: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <div style="background-color: #f2f9f6; width: 70px; height: 70px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 35px; margin-right: 20px; flex-shrink: 0; border: 1px solid #e4f0ea;">
+                            [INSERER_UN_SEUL_EMOJI_ICI]
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; color: #29a073; font-size: 1.1em; padding-bottom: 3px;">Nom du plat</h4>
+                            <i style="color: #666; font-size: 0.9em;">⏱️ Temps de préparation</i><br>
+                            <span style="font-size: 0.9em; color: #333;">Brève description des ingrédients utilisés.</span>
+                        </div>
+                    </div>
+    
+                    Sépare IMPÉRATIVEMENT le planning et les courses avec ce titre exact : ### LISTE DE COURSES
+                    
+                    2. Une liste de courses mutualisée et organisée par catégories avec un emoji au début de chaque titre. Inclus l'estimation du prix par ingrédient pour prouver que le total respecte les {budget_semaine} euros.
                     """
 
-                    # Appel à l'API Gemini
                     model = genai.GenerativeModel('gemini-3.5-flash-lite')
                     response = model.generate_content(prompt)
-
-                    st.success("Planning généré avec succès !")
-                    st.markdown(response.text)
+                    st.session_state.planning_genere = response.text
 
                 except Exception as e:
                     st.error(f"Une erreur s'est produite lors de la communication avec l'IA : {e}")
+
+    # Affichage interactif (HORS du bouton, pour rester affiché au rechargement)
+    if st.session_state.planning_genere:
+        texte = st.session_state.planning_genere
+
+        if "### LISTE DE COURSES" in texte:
+            planning, courses = texte.split("### LISTE DE COURSES")
+
+            st.markdown(planning, unsafe_allow_html=True)
+            st.markdown("---")
+            st.header("🛒 Ta Liste de Courses")
+
+            # Génération des cases à cocher dynamiques
+            for i, ligne in enumerate(courses.split('\n')):
+                ligne_propre = ligne.strip()
+                if ligne_propre.startswith('-') or ligne_propre.startswith('*'):
+                    texte_checkbox = ligne_propre[1:].strip()
+                    # Une clé unique "key" est requise par Streamlit dans une boucle
+                    st.checkbox(texte_checkbox, key=f"course_{i}")
+                elif ligne_propre:
+                    st.markdown(ligne_propre)
+        else:
+            st.markdown(texte, unsafe_allow_html=True)
 
 # ==========================================
 # ONGLET 2 : FONCTIONNALITÉ ANTI-GASPI
