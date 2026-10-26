@@ -4,11 +4,30 @@ from PIL import Image
 import os
 
 # --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="CampusCook AI", page_icon="🍲", layout="wide")
+st.set_page_config(page_title="Croqu'Mois", page_icon="🍏", layout="wide")
 
-# --- TITRE ET INTRODUCTION ---
-st.title("🎓 CampusCook AI : Ton assistant alimentaire étudiant")
-st.markdown("Mange mieux, respecte ton budget et ne gaspille plus rien !")
+# --- CHARTE GRAPHIQUE (CSS SUPPLÉMENTAIRE) ---
+st.markdown("""
+    <style>
+    /* Application de l'orange d'accentuation au survol des boutons */
+    div.stButton > button {
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        background-color: #f39c12 !important;
+        border-color: #f39c12 !important;
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- HEADER (Logo, Nom, Slogan) ---
+# Utilisation de colonnes pour centrer parfaitement l'image
+col1, col2, col3 = st.columns([1, 1, 1])
+with col2:
+    st.image("assets/logo.jpeg", use_container_width=True)
+
+st.markdown("---")
 
 # --- GESTION DE LA CLÉ API ---
 with st.sidebar:
