@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Logo Croqu'Mois" width="200"/>
+  <img src="assets/logo-light.jpeg" alt="Logo Croqu'Mois" width="400"/>
   <p>L'assistant alimentaire intelligent conçu pour les étudiants, propulsé par l'IA générative.</p>
 </div>
 
@@ -10,6 +10,12 @@
 Ce projet a été développé dans le cadre du cours **Advanced AI Algorithms (AAA)**.
 
 Les étudiants (18-28 ans) rencontrent des difficultés majeures pour concilier alimentation équilibrée, budget restreint et contraintes matérielles. **Croqu'Mois** dépasse la simple suggestion de recettes en agissant comme un véritable assistant d'organisation. En croisant des données multimodales (budget, emploi du temps, équipements réels, ingrédients restants), l'application génère des plannings sur-mesure et interactifs.
+
+## 🚀 Accès
+
+L'application est déployée et accessible à partir du lien suivant : https://croqu-mois.streamlit.app/.
+
+---
 
 ## ✨ Fonctionnalités & Démonstration
 
