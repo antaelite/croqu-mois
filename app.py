@@ -33,32 +33,18 @@ with st.sidebar:# 1. Le logo tout en haut avec une taille réduite (ex: 150 pixe
     with col2:
         st.image("assets/logo.png", use_container_width=True)
 
-    st.markdown("---")
-
-    # 2. La configuration en dessous
-    st.header("⚙️ Configuration")
-    api_key = st.text_input("Entre ta clé API Gemini :", type="password").strip()
-
-    if api_key:
-        genai.configure(api_key=api_key)
-        st.success("Clé API validée !")
-    else:
-        st.warning("Veuillez entrer une clé API pour faire fonctionner l'IA.")
-        # Bouton direct vers la page exacte de création de clé
-        st.link_button("🔑 Créer une clé API gratuite", "https://aistudio.google.com/app/apikey", use_container_width=True)
-
-        # Tutoriel dépliant
-        with st.expander("ℹ️ Comment créer sa clé API ?"):
-            st.markdown("""
-            1. Clique sur le bouton ci-dessus pour ouvrir Google AI Studio.
-            2. Connecte-toi avec ton compte Google.
-            3. Clique sur le bouton bleu **Create API key**.
-            4. Sélectionne **Create API key in new project**.
-            5. Copie la longue chaîne de caractères générée et colle-la dans le champ au-dessus.
-            """)
-
-    st.write("") # Espace optionnel
+    st.header("⚙️ À propos")
     st.markdown("**Projet AAA - Advanced AI Algorithms**")
+    st.info("L'Intelligence Artificielle est prête et configurée.")
+    
+# --- CONFIGURATION AUTOMATIQUE DE L'API ---
+# Récupération de la clé depuis les secrets Streamlit
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=api_key)
+except KeyError:
+    st.error("Erreur de configuration : Clé API introuvable dans les secrets.")
+    st.stop() # Arrête l'exécution de l'application si la clé n'est pas trouvée
 
 # --- ONGLETS DE L'APPLICATION ---
 tab1, tab2 = st.tabs(["📅 Planification & Courses", "📸 Anti-Gaspi (Scan Frigo)"])
@@ -104,15 +90,12 @@ with tab1:
 
     # Étape 4 & 5 : Génération
     if st.button("🚀 Générer mon planning et ma liste de courses", use_container_width=True):
-        if not api_key:
-            st.error("Veuillez d'abord configurer votre clé API dans la barre latérale.")
-        else:
-            with st.spinner("L'IA Croqu'Mois analyse tes contraintes et crée ton menu..."):
-                try:
-                    # Construction du prompt corrigé avec les Emoji Cards
-                    prompt = f"""
-                    Tu es un assistant culinaire spécialisé pour les étudiants.
-                    Voici le profil de l'étudiant pour cette semaine :
+        with st.spinner("L'IA Croqu'Mois analyse tes contraintes et crée ton menu..."):
+            try:
+                # Construction du prompt corrigé avec les Emoji Cards
+                prompt = f"""
+                Tu es un assistant culinaire spécialisé pour les étudiants.
+                Voici le profil de l'étudiant pour cette semaine :
     - Budget : {budget_semaine} euros. Tu DOIS le respecter.
     - Situations : {', '.join(situations)} {autre_situation}.
     - Équipements : {', '.join(equipements)}. Ne propose AUCUNE recette nécessitant un équipement non listé.
@@ -137,12 +120,12 @@ with tab1:
                     2. Une liste de courses mutualisée et organisée par catégories avec un emoji au début de chaque titre. Inclus l'estimation du prix par ingrédient pour prouver que le total respecte les {budget_semaine} euros.
                     """
 
-                    model = genai.GenerativeModel('gemini-3.5-flash-lite')
-                    response = model.generate_content(prompt)
-                    st.session_state.planning_genere = response.text
+                model = genai.GenerativeModel('gemini-3.5-flash-lite')
+                response = model.generate_content(prompt)
+                st.session_state.planning_genere = response.text
 
-                except Exception as e:
-                    st.error(f"Une erreur s'est produite lors de la communication avec l'IA : {e}")
+            except Exception as e:
+                st.error(f"Une erreur s'est produite lors de la communication avec l'IA : {e}")
 
     # Affichage interactif (HORS du bouton, pour rester affiché au rechargement)
     if st.session_state.planning_genere:
@@ -188,22 +171,19 @@ with tab2:
         st.image(image, caption="Tes ingrédients", use_container_width=True)
 
         if st.button("🪄 Trouver une recette avec ces restes", use_container_width=True):
-            if not api_key:
-                st.error("Veuillez d'abord configurer votre clé API dans la barre latérale.")
-            else:
-                with st.spinner("L'IA analyse tes ingrédients..."):
-                    try:
-                        prompt_vision = f"""
-                        Agis comme un chef anti-gaspillage pour étudiant.
-                        Analyse cette image et liste les ingrédients que tu peux identifier.
-                        Ensuite, propose UNE seule recette simple, délicieuse et réalisable avec tout ou partie de ces ingrédients.
-                        Garde à l'esprit que l'étudiant possède ces équipements : {', '.join(equipements)}.
-                        Donne les étapes de préparation étape par étape.
-                        """
-                        model_vision = genai.GenerativeModel('gemini-3.5-flash-lite')
-                        response_vision = model_vision.generate_content([prompt_vision, image])
+            with st.spinner("L'IA analyse tes ingrédients..."):
+                try:
+                    prompt_vision = f"""
+                    Agis comme un chef anti-gaspillage pour étudiant.
+                    Analyse cette image et liste les ingrédients que tu peux identifier.
+                    Ensuite, propose UNE seule recette simple, délicieuse et réalisable avec tout ou partie de ces ingrédients.
+                    Garde à l'esprit que l'étudiant possède ces équipements : {', '.join(equipements)}.
+                    Donne les étapes de préparation étape par étape.
+                    """
+                    model_vision = genai.GenerativeModel('gemini-3.5-flash-lite')
+                    response_vision = model_vision.generate_content([prompt_vision, image])
 
-                        st.success("Recette trouvée !")
-                        st.markdown(response_vision.text)
-                    except Exception as e:
-                        st.error(f"Erreur avec l'analyse d'image : {e}")
+                    st.success("Recette trouvée !")
+                    st.markdown(response_vision.text)
+                except Exception as e:
+                    st.error(f"Erreur avec l'analyse d'image : {e}")
